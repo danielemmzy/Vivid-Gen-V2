@@ -1,0 +1,33 @@
+# Isolated Postgres + Redis for the integration suite (tests/integration/)
+# and for manual chaos testing (see docs/CHAOS_TESTING.md). Separate from
+# docker-compose.yml on purpose — never point tests at anything resembling
+# a real environment's data.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d
+#   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:55432/vividgen_test \
+#     alembic upgrade head
+#   TEST_DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:55432/vividgen_test \
+#   REDIS_URL=redis://localhost:56379/0 \
+#     pytest tests/integration -m integration -v
+#
+# (alembic reads DATABASE_URL via app.core.config.settings; the test suite's
+# own fixtures read TEST_DATABASE_URL — see tests/integration/conftest.py —
+# kept as two separate variables so a stray `pytest` invocation without
+# TEST_DATABASE_URL set can never accidentally point at a real database.)
+services:
+  test-postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vividgen_test
+    ports:
+      - "55432:5432"
+    tmpfs:
+      - /var/lib/postgresql/data  # ephemeral — every test run starts from a clean DB
+
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "56379:6379"

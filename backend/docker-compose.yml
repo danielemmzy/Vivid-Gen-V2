@@ -1,0 +1,84 @@
+# Local dev / staging stack — this is what a beginner should run to get
+# everything working on one machine with nothing else installed except
+# Docker. In real production, `api` and `worker` scale independently (see
+# the architecture plan's Phase 10) and Postgres/Redis are usually managed
+# services (RDS/ElastiCache or similar), not containers like these.
+#
+# `scheduler` is its own service, deliberately separate from `api` — see
+# app/scheduler/run.py's docstring. Do not run the reconciliation sweep
+# inside the api service's process; if you ever scale `api` to N
+# replicas, each would otherwise run its own sweep concurrently.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vividgen
+    ports:
+      - "5432:5432"   # exposed to your host machine so Prisma (frontend, run outside Docker) can reach it too
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  worker:
+    build: .
+    env_file: .env
+    command: python -m app.workers.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    env_file: .env
+    command: python -m app.scheduler.run
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
