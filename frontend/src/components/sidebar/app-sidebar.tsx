@@ -3,11 +3,7 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
-  SidebarMenu,
 } from "../ui/sidebar";
 import SidebarMenuItems from "./sidebar-menu-items";
 import { Credits } from "./credits";
@@ -18,17 +14,13 @@ import { User } from "lucide-react";
 export async function AppSidebar() {
   return (
     <Sidebar>
+      <SidebarHeader className="mt-2 mb-2 px-2">
+        <p className="font-display text-2xl font-semibold tracking-tight uppercase">
+          Vivid Gen
+        </p>
+      </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-primary mt-4 mb-12 flex justify-center px-2 text-center text-3xl font-black tracking-widest uppercase">
-            <p>Vivid Gen</p>
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItems />
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <SidebarMenuItems />
       </SidebarContent>
       <SidebarFooter>
         <div className="mb-2 flex w-full items-center justify-center gap-1 text-xs">

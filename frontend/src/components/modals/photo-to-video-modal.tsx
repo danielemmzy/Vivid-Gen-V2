@@ -18,21 +18,15 @@ import { useState, useRef } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
 import AudioUploadModal from "../audio-upload-modal";
-import { file, set } from "zod";
 import ChooseVoiceModal, { type Voice } from "../choose-voice-modal";
 import { useAudioPlayer } from "~/hooks/use-audio-player";
 import Cropper, { type Area } from "react-easy-crop";
 import { Switch } from "../ui/switch";
 import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-} from "../ui/select";
 import getCroppedImg from "~/utils/croppedimage";
 import { getPresignedUrl, photoToVideo } from "~/actions/generation";
+import { GenerationEstimateCard } from "~/components/create/generation-estimate-card";
+import { useGenerationEstimate } from "~/hooks/use-generation-estimate";
 import { toast } from "sonner";
 
 const samplePhotos = [
@@ -66,11 +60,13 @@ export function PhotoToVideoModal({
   const [selectedAudioUrl, setSelectedAudioUrl] = useState<string | null>(null);
   const [selectedAudioName, setSelectedAudioName] =
     useState<string>("new_recording.wav");
+  const [audioDurationSeconds, setAudioDurationSeconds] = useState<number | null>(null);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [customVoiceFile, setCustomVoiceFile] = useState<File | null>(null);
 
   const [experimentalModel, setExperimentalModel] = useState(false);
+  const [quality, setQuality] = useState<"low" | "medium" | "high">("medium");
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [aspectRatio, setAspectRatio] = useState(1 / 1);
@@ -78,9 +74,14 @@ export function PhotoToVideoModal({
 
   const [enhancement, setEnhancement] = useState(true);
   const [expressiveness, setExpressiveness] = useState(1);
-  const [resolution, setResolution] = useState("512");
+  const resolution = "720"; // Current image-to-video worker's verified output resolution.
 
   const [loading, setLoading] = useState(false);
+  const { estimate, loading: estimateLoading, error: estimateError } = useGenerationEstimate(
+    selectedAudioUrl
+      ? { generation_type: "avatar", model_id: "omnihuman-1.5", duration_seconds: audioDurationSeconds ?? undefined }
+      : { generation_type: "image_to_video", quality_mode: quality, duration_seconds: 5 },
+  );
 
   const { playingSrc, togglePlay } = useAudioPlayer();
 
@@ -93,6 +94,10 @@ export function PhotoToVideoModal({
   };
 
   const handleGenerateVideo = async () => {
+    if (!estimate || estimateLoading || estimateError) {
+      toast.error("Wait for a valid cost estimate before generating.");
+      return;
+    }
     setLoading(true);
 
     let photoS3Key: string | null = null;
@@ -192,9 +197,12 @@ export function PhotoToVideoModal({
       audioS3Key,
       voiceS3Key,
       expressiveness,
-      enhancement, 
+      enhancement,
       experimentalModel,
-      resolution
+      resolution,
+      quality_mode: quality,
+      model: estimate.model_id,
+      audioDurationSeconds: audioDurationSeconds ?? undefined,
     })
 
     toast.success("photo to video job queued! You will be able to see the status on the dashboard.")
@@ -345,6 +353,7 @@ export function PhotoToVideoModal({
                       onClick={() => {
                         setSelectedAudioUrl(null);
                         setSelectedAudioName("new_recording.wav");
+                        setAudioDurationSeconds(null);
                       }}
                     >
                       <Trash2 className="h-5 w-5 text-gray-600" />
@@ -354,6 +363,10 @@ export function PhotoToVideoModal({
                       id="audio-preview"
                       ref={audioRef}
                       src={selectedAudioUrl}
+                      onLoadedMetadata={() => {
+                        const duration = audioRef.current?.duration;
+                        setAudioDurationSeconds(Number.isFinite(duration) && duration && duration > 0 ? Math.ceil(duration) : null);
+                      }}
                       style={{ display: "none" }}
                     />
                   </div>
@@ -432,6 +445,22 @@ export function PhotoToVideoModal({
                   </div>
                 </div>
               </div>
+              <div className="mb-3">
+                <label className="text-xs font-medium text-gray-700">Quality</label>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {[
+                    ["low", "Low", "Wan · economical"],
+                    ["medium", "Medium", "Balanced"],
+                    ["high", "High", "Premium"],
+                  ].map(([id, label, hint]) => (
+                    <button key={id} type="button" onClick={() => setQuality(id as "low" | "medium" | "high")} className={`rounded-md border px-3 py-2 text-left ${quality === id ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 hover:border-gray-400"}`}>
+                      <span className="block text-xs font-medium">{label}</span>
+                      <span className="block text-[10px] opacity-70">{hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -476,26 +505,15 @@ export function PhotoToVideoModal({
                   </div>
                 )}
 
-                <div className="flex w-full items-center justify-end">
-                  {experimentalModel && (
-                    <Select
-                      value={resolution}
-                      onValueChange={(value) => setResolution(value)}
-                    >
-                      <SelectTrigger className="w-[100px] rounded border px-2 py-1 text-xs">
-                        <SelectValue placeholder="512p" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="512">512p</SelectItem>
-                        <SelectItem value="640">640p</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                <div className="flex w-full flex-col gap-3">
+                  <GenerationEstimateCard estimate={estimate} loading={estimateLoading} error={estimateError} />
+                  <p className="text-xs text-gray-500">The selected model's supported output settings are used. Unsupported resolution controls are hidden instead of pretending to change the provider's output.</p>
+                  <div className="flex w-full items-center justify-end">
                   <Button
                     onClick={handleGenerateVideo}
                     className="ml-2 bg-purple-600 px-4 py-2 text-sm text-white"
                     disabled={
-                      loading ||
+                      loading || estimateLoading || !estimate || !!estimateError ||
                       !(
                         (selectedPhotoFile ?? selectedPhotoUrl) &&
                         (script.trim().length > 0 || selectedAudioUrl)
@@ -505,6 +523,7 @@ export function PhotoToVideoModal({
                     {loading ? <Loader2 className="mr-2 h-4 w-4" /> : null}
                     Generate Video
                   </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -515,6 +534,7 @@ export function PhotoToVideoModal({
           onOpenChange={setAudioModalOpen}
           onAudioRecorded={(audioBlob: Blob) => {
             const url = URL.createObjectURL(audioBlob);
+            setAudioDurationSeconds(null);
             setSelectedAudioUrl(url);
             let name =
               "new_recording.wav" +

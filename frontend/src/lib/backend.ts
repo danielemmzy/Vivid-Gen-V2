@@ -23,6 +23,19 @@ function internalHeaders(userId: string, role: string) {
   };
 }
 
+export class BackendError extends Error {
+  code?: string;
+  details?: Record<string, unknown>;
+  status: number;
+  constructor(message: string, code: string | undefined, details: Record<string, unknown> | undefined, status: number) {
+    super(message);
+    this.name = "BackendError";
+    this.code = code;
+    this.details = details;
+    this.status = status;
+  }
+}
+
 export async function backendFetch<T>(
   userId: string,
   path: string,
@@ -34,10 +47,22 @@ export async function backendFetch<T>(
     headers: { ...internalHeaders(userId, role), ...(init.headers ?? {}) },
     cache: "no-store",
   });
-  const body = await response.json().catch(() => null);
+  const raw = await response.text();
+  let body: any = null;
+  if (raw.trim()) {
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      body = { detail: raw.slice(0, 2000) };
+    }
+  }
   if (!response.ok) {
-    const message = typeof body?.detail === "string" ? body.detail : (body?.detail?.message ?? body?.error?.message ?? "Backend request failed");
-    throw new Error(message);
+    const message = typeof body?.detail === "string"
+      ? body.detail
+      : (body?.detail?.message ?? body?.error?.message ?? body?.message ?? `Backend request failed (${response.status})`);
+    const details = (body?.error ?? body?.details ?? undefined) as Record<string, unknown> | undefined;
+    const code = body?.error?.code ?? body?.code ?? undefined;
+    throw new BackendError(message, code, details, response.status);
   }
   return body as T;
 }
