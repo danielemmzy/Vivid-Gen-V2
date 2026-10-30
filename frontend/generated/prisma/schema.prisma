@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+//
+// Schema split per the architecture plan (Decision 2): this file owns the
+// `auth` Postgres schema only — User/Session/Account/Verification and the
+// `credits` balance column. All product data (generations, credits ledger,
+// movie projects) lives in the `core` schema, owned exclusively by the
+// FastAPI backend's Alembic migrations — see backend/alembic/versions/.
+// Never add a generation-shaped model back into this file.
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../generated/prisma"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["auth"]
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  credits       Int       @default(100)
+  // Signed into every FastAPI request (see lib/backend.ts / core/security.py)
+  // so the backend can gate admin-only endpoints. Values must match
+  // backend/app/core/security.py's VALID_ROLES. Exposing this on the
+  // better-auth session object requires configuring it as a
+  // session.additionalFields entry in lib/auth.ts — not done yet, so
+  // application code should read it via a direct Prisma lookup until then,
+  // never trust a client-supplied role.
+  role          String    @default("user")
+
+  @@unique([email])
+  @@map("user")
+  @@schema("auth")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+  @@schema("auth")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+  @@schema("auth")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+  @@schema("auth")
+}

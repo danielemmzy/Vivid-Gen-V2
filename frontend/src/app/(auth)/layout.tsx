@@ -1,13 +1,15 @@
 import "~/styles/globals.css";
 
 import { type Metadata } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Bricolage_Grotesque, IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 
 import { Toaster } from "~/components/ui/sonner";
-
 import { Providers } from "~/components/providers";
+import { ThemeProvider } from "~/components/theme-provider";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const bricolage = Bricolage_Grotesque({ subsets: ["latin"], variable: "--font-bricolage" });
+const instrument = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-mono" });
 
 export const metadata: Metadata = {
   title: "Vivid Gen",
@@ -15,21 +17,22 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} `}>
+    <html
+      lang="en"
+      className={`${bricolage.variable} ${instrument.variable} ${plexMono.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-svh flex-col items-center justify-center">
-        <Providers>
-          {children}
-          <Toaster />
-        </Providers>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+          <Providers>
+            {children}
+            <Toaster />
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );

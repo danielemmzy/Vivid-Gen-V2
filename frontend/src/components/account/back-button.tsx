@@ -8,7 +8,7 @@ export function BackButton() {
   const router = useRouter();
 
   return (
-    <Button variant="outline" className="mb-6 cursor-pointer" onClick={() => router.push("/")}>
+    <Button variant="outline" className="mb-6 cursor-pointer" onClick={() => router.push("/dashboard")}>
       <ArrowLeftIcon />
       Back
     </Button>
