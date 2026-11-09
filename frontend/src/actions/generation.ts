@@ -12,11 +12,19 @@ async function userId() {
   return session.user.id;
 }
 
-export async function getPresignedUrl(fileName: string, fileType: string, purpose: string) {
+export async function getPresignedUrl(
+  fileName: string,
+  fileType: string,
+  purpose: string,
+) {
   const uid = await userId();
   return backendFetch<{ url: string; key: string }>(uid, "/uploads/presign", {
     method: "POST",
-    body: JSON.stringify({ file_name: fileName, content_type: fileType, purpose }),
+    body: JSON.stringify({
+      file_name: fileName,
+      content_type: fileType,
+      purpose,
+    }),
   });
 }
 
@@ -65,12 +73,18 @@ export async function photoToVideo(request: GenerateRequest) {
     return backendFetch<GenerationResult>(uid, "/generations/image-to-video", {
       method: "POST",
       body: JSON.stringify({
-        prompt: request.script || "Cinematic natural camera movement and subtle subject motion",
+        prompt:
+          request.script ??
+          "Cinematic natural camera movement and subtle subject motion",
         input_s3_key: request.photoS3Key,
         model: request.model,
         quality_mode: request.quality_mode ?? "medium",
         duration_seconds: 5,
-        resolution: request.model?.startsWith("kling-2.5") ? undefined : (request.resolution === "1080" ? "1080p" : "720p"),
+        resolution: request.model?.startsWith("kling-2.5")
+          ? undefined
+          : request.resolution === "1080"
+            ? "1080p"
+            : "720p",
       }),
     });
   }
@@ -85,14 +99,31 @@ export async function photoToVideo(request: GenerateRequest) {
   });
 }
 
-export async function textToImage(request: { prompt: string; model?: string; quality_mode?: "low" | "medium" | "high"; aspect_ratio?: string; num_images?: number }) {
+export async function textToImage(request: {
+  prompt: string;
+  model?: string;
+  quality_mode?: "low" | "medium" | "high";
+  aspect_ratio?: string;
+  num_images?: number;
+}) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, "/generations/text-to-image", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationResult>(uid, "/generations/text-to-image", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
-export async function imageToImage(request: { prompt: string; input_s3_key: string; model?: string; quality_mode?: "low" | "medium" | "high" }) {
+export async function imageToImage(request: {
+  prompt: string;
+  input_s3_key: string;
+  model?: string;
+  quality_mode?: "low" | "medium" | "high";
+}) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, "/generations/image-to-image", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationResult>(uid, "/generations/image-to-image", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
 export interface GenerationEstimate {
@@ -127,7 +158,15 @@ export interface GenerationEstimate {
 }
 
 export interface GenerationEstimateRequest {
-  generation_type: "text_to_video" | "image_to_video" | "text_to_image" | "image_to_image" | "avatar" | "video_translation" | "audio_replace" | "text_to_speech";
+  generation_type:
+    | "text_to_video"
+    | "image_to_video"
+    | "text_to_image"
+    | "image_to_image"
+    | "avatar"
+    | "video_translation"
+    | "audio_replace"
+    | "text_to_speech";
   model_id?: string | null;
   quality_mode?: "low" | "medium" | "high";
   duration_seconds?: number;
@@ -138,31 +177,65 @@ export interface GenerationEstimateRequest {
 
 export async function estimateGeneration(request: GenerationEstimateRequest) {
   const uid = await userId();
-  return backendFetch<GenerationEstimate>(uid, "/models/estimate", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationEstimate>(uid, "/models/estimate", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
-export async function textToVideo(request: { prompt: string; model?: string; quality_mode?: "low" | "medium" | "high"; duration_seconds?: number; resolution?: "420p" | "720p"; aspect_ratio?: string }) {
+export async function textToVideo(request: {
+  prompt: string;
+  model?: string;
+  quality_mode?: "low" | "medium" | "high";
+  duration_seconds?: number;
+  resolution?: "420p" | "720p";
+  aspect_ratio?: string;
+}) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, "/generations/text-to-video", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationResult>(uid, "/generations/text-to-video", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
-export async function imageToVideo(request: { prompt: string; input_s3_key: string; model?: string; quality_mode?: "low" | "medium" | "high"; duration_seconds?: number; resolution?: "420p" | "720p"; aspect_ratio?: string }) {
+export async function imageToVideo(request: {
+  prompt: string;
+  input_s3_key: string;
+  model?: string;
+  quality_mode?: "low" | "medium" | "high";
+  duration_seconds?: number;
+  resolution?: "420p" | "720p";
+  aspect_ratio?: string;
+}) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, "/generations/image-to-video", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationResult>(uid, "/generations/image-to-video", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
 // POST /generations/avatar — verified in backend/app/schemas/generation.py::AvatarRequest.
 // photoToVideo() above also reaches this endpoint as an implicit branch when
 // audio is present; this is the explicit, schema-accurate entry point for a
 // dedicated Avatar workflow page.
-export async function createAvatar(request: { image_s3_key: string; audio_s3_key: string; duration_seconds?: number; model?: string }) {
+export async function createAvatar(request: {
+  image_s3_key: string;
+  audio_s3_key: string;
+  duration_seconds?: number;
+  model?: string;
+}) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, "/generations/avatar", { method: "POST", body: JSON.stringify(request) });
+  return backendFetch<GenerationResult>(uid, "/generations/avatar", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
 }
 
 export async function getGeneration(id: string) {
   const uid = await userId();
-  return backendFetch<GenerationResult>(uid, `/generations/${id}`, { method: "GET" });
+  return backendFetch<GenerationResult>(uid, `/generations/${id}`, {
+    method: "GET",
+  });
 }
 
 // POST /generations/{id}/cancel — gap-closure: previously there was no way
@@ -170,18 +243,22 @@ export async function getGeneration(id: string) {
 // backend/app/services/generation/service.py::GenerationService.cancel.
 export async function cancelGeneration(id: string) {
   const uid = await userId();
-  const result = await backendFetch<GenerationResult>(uid, `/generations/${id}/cancel`, { method: "POST" });
+  const result = await backendFetch<GenerationResult>(
+    uid,
+    `/generations/${id}/cancel`,
+    { method: "POST" },
+  );
   revalidatePath(`/generations/${id}`);
   return result;
 }
 
 export async function listGenerations(limit = 50, offset = 0) {
   const uid = await userId();
-  return backendFetch<{ generations: GenerationResult[]; limit: number; offset: number }>(
-    uid,
-    `/generations?limit=${limit}&offset=${offset}`,
-    { method: "GET" },
-  );
+  return backendFetch<{
+    generations: GenerationResult[];
+    limit: number;
+    offset: number;
+  }>(uid, `/generations?limit=${limit}&offset=${offset}`, { method: "GET" });
 }
 
 export interface TranslateRequest {

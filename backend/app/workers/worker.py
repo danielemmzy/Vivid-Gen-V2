@@ -9,8 +9,15 @@ from arq.connections import RedisSettings
 
 from app.core.config import settings
 from app.core.logging import configure_logging
-from app.jobs.generation import finalize_generation
-from app.jobs.media import assemble_movie
+from app.jobs.generation import finalize_generation, submit_generation
+from app.jobs.production import (
+    run_branding_task,
+    run_captions_task,
+    run_music_task,
+    run_render_task,
+    run_scene_task,
+    run_voice_task,
+)
 from app.monitoring.sentry import init_sentry
 
 
@@ -20,7 +27,14 @@ async def _startup(ctx):
 
 
 class WorkerSettings:
-    functions = [finalize_generation, assemble_movie]
+    # gap-closure (0007): `assemble_movie` (the old flat "last shot done
+    # -> assemble everything in one job" trigger) is gone — replaced by
+    # six per-task-type jobs the DAG scheduler (orchestration/
+    # scheduler.py) dispatches to individually. See jobs/production.py.
+    functions = [
+        submit_generation, finalize_generation, run_scene_task, run_voice_task, run_captions_task,
+        run_music_task, run_branding_task, run_render_task,
+    ]
     on_startup = _startup
     redis_settings = RedisSettings.from_dsn(settings.redis_url)
     max_jobs = 10

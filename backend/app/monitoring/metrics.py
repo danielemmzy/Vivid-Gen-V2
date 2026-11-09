@@ -25,3 +25,9 @@ credits_refunded_total = Counter("vivid_credits_refunded_total", "Credits refund
 
 provider_cost_usd_total = Counter("vivid_provider_cost_usd_total", "Cumulative provider spend in USD", ["provider", "model"])
 revenue_credits_total = Counter("vivid_revenue_credits_total", "Cumulative credits charged to users")
+
+media_search_total = Counter("vivid_media_search_total", "Stock media searches", ["provider", "kind", "outcome"])
+media_import_total = Counter("vivid_media_import_total", "Imported stock media assets", ["provider", "kind", "outcome"])
+source_extraction_total = Counter("vivid_source_extraction_total", "URL/PPTX source extraction outcomes", ["source_type", "outcome"])
+entitlement_block_total = Counter("vivid_entitlement_block_total", "Requests blocked by plan entitlements", ["plan", "reason"])
+credit_purchase_total = Counter("vivid_credit_purchase_total", "Polar credit-pack purchase webhook grants", ["outcome"])

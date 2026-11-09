@@ -15,10 +15,11 @@ import { env } from "~/env";
 
 const polarClient = new Polar({
   accessToken: env.POLAR_ACCESS_TOKEN,
-  server: "sandbox",
+  server: env.POLAR_SERVER,
 });
 
 export const auth = betterAuth({
+  secret: env.BETTER_AUTH_SECRET,
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),

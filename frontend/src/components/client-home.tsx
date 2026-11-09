@@ -7,7 +7,6 @@ import { Download,
   Play,
   RefreshCw,
   Video, } from "lucide-react";
-import { Description } from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState } from "react";
 import { PhotoToVideoModal } from "./modals/photo-to-video-modal";
 import { Button } from "./ui/button";

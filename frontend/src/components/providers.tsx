@@ -1,4 +1,3 @@
-
 "use client";
 
 import { AuthUIProvider } from "@daveyplate/better-auth-ui";
@@ -13,8 +12,8 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <AuthUIProvider
       authClient={authClient}
-      navigate={router.push}
-      replace={router.replace}
+      navigate={(href) => router.push(href)}
+      replace={(href) => router.replace(href)}
       redirectTo="/dashboard"
       onSessionChange={() => {
         // Refresh server components after authentication changes.

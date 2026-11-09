@@ -60,7 +60,9 @@ export function PhotoToVideoModal({
   const [selectedAudioUrl, setSelectedAudioUrl] = useState<string | null>(null);
   const [selectedAudioName, setSelectedAudioName] =
     useState<string>("new_recording.wav");
-  const [audioDurationSeconds, setAudioDurationSeconds] = useState<number | null>(null);
+  const [audioDurationSeconds, setAudioDurationSeconds] = useState<
+    number | null
+  >(null);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState<Voice | null>(null);
   const [customVoiceFile, setCustomVoiceFile] = useState<File | null>(null);
@@ -77,10 +79,22 @@ export function PhotoToVideoModal({
   const resolution = "720"; // Current image-to-video worker's verified output resolution.
 
   const [loading, setLoading] = useState(false);
-  const { estimate, loading: estimateLoading, error: estimateError } = useGenerationEstimate(
+  const {
+    estimate,
+    loading: estimateLoading,
+    error: estimateError,
+  } = useGenerationEstimate(
     selectedAudioUrl
-      ? { generation_type: "avatar", model_id: "omnihuman-1.5", duration_seconds: audioDurationSeconds ?? undefined }
-      : { generation_type: "image_to_video", quality_mode: quality, duration_seconds: 5 },
+      ? {
+          generation_type: "avatar",
+          model_id: "omnihuman-1.5",
+          duration_seconds: audioDurationSeconds ?? undefined,
+        }
+      : {
+          generation_type: "image_to_video",
+          quality_mode: quality,
+          duration_seconds: 5,
+        },
   );
 
   const { playingSrc, togglePlay } = useAudioPlayer();
@@ -192,7 +206,7 @@ export function PhotoToVideoModal({
 
     // 4. Call server action
     await photoToVideo({
-      photoS3Key : photoS3Key!,
+      photoS3Key: photoS3Key!,
       script: script,
       audioS3Key,
       voiceS3Key,
@@ -203,10 +217,11 @@ export function PhotoToVideoModal({
       quality_mode: quality,
       model: estimate.model_id,
       audioDurationSeconds: audioDurationSeconds ?? undefined,
-    })
+    });
 
-    toast.success("photo to video job queued! You will be able to see the status on the dashboard.")
-  
+    toast.success(
+      "photo to video job queued! You will be able to see the status on the dashboard.",
+    );
 
     setLoading(false);
     onChange(false);
@@ -270,6 +285,7 @@ export function PhotoToVideoModal({
                   <div className="relative">
                     <img
                       src={selectedPhotoUrl}
+                      alt="Selected source"
                       crossOrigin="anonymous"
                       className="max-h-[340px] max-w-full rounded-xl border object-contain md:max-w-[340px]"
                     />
@@ -310,6 +326,7 @@ export function PhotoToVideoModal({
                       {samplePhotos.map((item) => (
                         <img
                           key={item.s3Key}
+                          alt="Sample source"
                           crossOrigin="anonymous"
                           className="h-14 w-14 cursor-pointer rounded border object-cover"
                           src={item.url}
@@ -365,7 +382,11 @@ export function PhotoToVideoModal({
                       src={selectedAudioUrl}
                       onLoadedMetadata={() => {
                         const duration = audioRef.current?.duration;
-                        setAudioDurationSeconds(Number.isFinite(duration) && duration && duration > 0 ? Math.ceil(duration) : null);
+                        setAudioDurationSeconds(
+                          Number.isFinite(duration) && duration && duration > 0
+                            ? Math.ceil(duration)
+                            : null,
+                        );
                       }}
                       style={{ display: "none" }}
                     />
@@ -446,16 +467,27 @@ export function PhotoToVideoModal({
                 </div>
               </div>
               <div className="mb-3">
-                <label className="text-xs font-medium text-gray-700">Quality</label>
+                <label className="text-xs font-medium text-gray-700">
+                  Quality
+                </label>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {[
                     ["low", "Low", "Wan · economical"],
                     ["medium", "Medium", "Balanced"],
                     ["high", "High", "Premium"],
                   ].map(([id, label, hint]) => (
-                    <button key={id} type="button" onClick={() => setQuality(id as "low" | "medium" | "high")} className={`rounded-md border px-3 py-2 text-left ${quality === id ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 hover:border-gray-400"}`}>
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() =>
+                        setQuality(id as "low" | "medium" | "high")
+                      }
+                      className={`rounded-md border px-3 py-2 text-left ${quality === id ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 hover:border-gray-400"}`}
+                    >
                       <span className="block text-xs font-medium">{label}</span>
-                      <span className="block text-[10px] opacity-70">{hint}</span>
+                      <span className="block text-[10px] opacity-70">
+                        {hint}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -506,23 +538,34 @@ export function PhotoToVideoModal({
                 )}
 
                 <div className="flex w-full flex-col gap-3">
-                  <GenerationEstimateCard estimate={estimate} loading={estimateLoading} error={estimateError} />
-                  <p className="text-xs text-gray-500">The selected model's supported output settings are used. Unsupported resolution controls are hidden instead of pretending to change the provider's output.</p>
+                  <GenerationEstimateCard
+                    estimate={estimate}
+                    loading={estimateLoading}
+                    error={estimateError}
+                  />
+                  <p className="text-xs text-gray-500">
+                    The selected model&apos;s supported output settings are
+                    used. Unsupported resolution controls are hidden instead of
+                    pretending to change the provider&apos;s output.
+                  </p>
                   <div className="flex w-full items-center justify-end">
-                  <Button
-                    onClick={handleGenerateVideo}
-                    className="ml-2 bg-purple-600 px-4 py-2 text-sm text-white"
-                    disabled={
-                      loading || estimateLoading || !estimate || !!estimateError ||
-                      !(
-                        (selectedPhotoFile ?? selectedPhotoUrl) &&
-                        (script.trim().length > 0 || selectedAudioUrl)
-                      )
-                    }
-                  >
-                    {loading ? <Loader2 className="mr-2 h-4 w-4" /> : null}
-                    Generate Video
-                  </Button>
+                    <Button
+                      onClick={handleGenerateVideo}
+                      className="ml-2 bg-purple-600 px-4 py-2 text-sm text-white"
+                      disabled={
+                        loading ||
+                        estimateLoading ||
+                        !estimate ||
+                        !!estimateError ||
+                        !(
+                          (selectedPhotoFile ?? selectedPhotoUrl) &&
+                          (script.trim().length > 0 || selectedAudioUrl)
+                        )
+                      }
+                    >
+                      {loading ? <Loader2 className="mr-2 h-4 w-4" /> : null}
+                      Generate Video
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -3,7 +3,6 @@ idempotency+audit -> map payload -> update generation state -> enqueue the
 finalize job -> return fast. Kept out of app/routers/ entirely per the
 architecture plan ("separate webhook routing from webhook business
 logic") — the router just calls `handle_fal_webhook`."""
-from datetime import datetime, timezone
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,7 +13,7 @@ from app.jobs.queue import enqueue_generation_finalize
 from app.models.webhook_event import WebhookEvent
 from app.monitoring.metrics import webhook_failed_total, webhook_received_total
 from app.repository.generations import GenerationRepository
-from app.services.credits.service import CreditService
+from app.services.generation.service import GenerationService
 
 logger = get_logger(__name__)
 
@@ -53,18 +52,22 @@ async def handle_fal_webhook(session: AsyncSession, payload: dict) -> dict:
         await session.commit()
         return {"ok": True, "ignored": True}
 
-    if row.status in (GenerationStatus.COMPLETED, GenerationStatus.FAILED, GenerationStatus.REFUNDED):
+    if GenerationStatus(row.status).is_terminal:
         event_row.processed = True
         await session.commit()
         return {"ok": True, "idempotent": True}
 
     if payload.get("status") == "ERROR":
-        credit_service = CreditService(session)
-        await credit_service.refund(row.user_id, row.id, row.credits_reserved, "Provider generation failed")
-        row.status = GenerationStatus.REFUNDED
-        row.error_code = "FAL_GENERATION_FAILED"
-        row.error_message = str(payload.get("error") or payload.get("payload"))[:2000]
-        row.failed_at = datetime.now(timezone.utc)
+        # gap-closure: previously this always refunded immediately,
+        # regardless of whether the failure was transient (worth retrying
+        # against a fallback model) or permanent. handle_provider_error
+        # classifies it and only refunds when no automatic retry is
+        # appropriate — see services/generation/service.py and
+        # orchestration/provider_errors.py.
+        error_message = str(payload.get("error") or payload.get("payload"))[:2000]
+        status_code = payload.get("payload", {}).get("status_code") if isinstance(payload.get("payload"), dict) else None
+        generation_service = GenerationService(session)
+        await generation_service.handle_provider_error(row, error_message=error_message, status_code=status_code)
         event_row.processed = True
         await session.commit()
         return {"ok": True}

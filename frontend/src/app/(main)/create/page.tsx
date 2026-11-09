@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { DirectorPromptForm } from "~/components/create/director-prompt-form";
+import { getModelCatalog, type CatalogModel } from "~/actions/models";
 
 const workflows: { href: string; label: string; description: string; icon: LucideIcon }[] = [
   { href: "/create/ads", icon: Megaphone, label: "Ad Studio", description: "A complete campaign from product to finished ad." },
@@ -42,6 +43,8 @@ const tools: { href: string; label: string; icon: LucideIcon; description: strin
 export default async function CreatePage({ searchParams }: { searchParams?: Promise<{ prompt?: string }> }) {
   const params = searchParams ? await searchParams : {};
   const initialPrompt = typeof params.prompt === "string" ? params.prompt : "";
+  const { models } = await getModelCatalog();
+  const directorModels = models.filter((model: CatalogModel) => model.supports_movie_shots && model.provider_configured);
 
   return (
     <div className="studio-create-page mx-auto max-w-[1160px] space-y-10 px-5 py-8 sm:px-8 sm:py-10">
@@ -52,7 +55,7 @@ export default async function CreatePage({ searchParams }: { searchParams?: Prom
 
       <section className="studio-director-panel">
         <div className="studio-panel-heading"><span className="studio-card-icon"><Clapperboard className="size-5" /></span><div><h2>AI Director</h2><span>Start with an idea</span></div></div>
-        <DirectorPromptForm initialPrompt={initialPrompt} />
+        <DirectorPromptForm initialPrompt={initialPrompt} models={directorModels} />
       </section>
 
       <section>

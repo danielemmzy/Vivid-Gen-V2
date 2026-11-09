@@ -129,7 +129,11 @@ export function VideoTranslationModal({
               <h3 className="font-semibold">Source Video</h3>
               <div className="relative">
                 {videoUrl && (
-                  <video src={videoUrl} controls className="w-full rounded-lg" />
+                  <video
+                    src={videoUrl}
+                    controls
+                    className="w-full rounded-lg"
+                  />
                 )}
                 <Button
                   onClick={() => {
@@ -151,7 +155,7 @@ export function VideoTranslationModal({
               <div>
                 <label className="text-sm font-medium">Target language</label>
                 <Select
-                  value={targetLanguage || undefined}
+                  value={targetLanguage ?? undefined}
                   onValueChange={(value) => setTargetLanguage(value)}
                 >
                   <SelectTrigger className="mt-1 w-full">

@@ -3,7 +3,11 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { createBrandKit, deleteBrandKit, type BrandKit } from "~/actions/brand-kits";
+import {
+  createBrandKit,
+  deleteBrandKit,
+  type BrandKit,
+} from "~/actions/brand-kits";
 import { FileDropInput } from "~/components/file-drop-input";
 import { Button } from "~/components/ui/button";
 import {
@@ -27,7 +31,9 @@ export function BrandKitsList({ brandKits }: { brandKits: BrandKit[] }) {
       await deleteBrandKit(id);
     } catch (err) {
       setKits(prev);
-      toast.error(err instanceof Error ? err.message : "Couldn't delete that brand kit.");
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't delete that brand kit.",
+      );
     }
   }
 
@@ -39,17 +45,28 @@ export function BrandKitsList({ brandKits }: { brandKits: BrandKit[] }) {
 
       {kits.length === 0 ? (
         <div className="text-muted-foreground rounded-xl border py-16 text-center text-sm">
-          No brand kits yet. Create one, then select it when a workflow's plan has branding enabled.
+          No brand kits yet. Create one, then select it when a workflow&apos;s
+          plan has branding enabled.
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {kits.map((kit) => (
-            <div key={kit.id} className="flex items-center gap-3 rounded-xl border p-4">
+            <div
+              key={kit.id}
+              className="flex items-center gap-3 rounded-xl border p-4"
+            >
               {kit.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={kit.logo_url} alt="" className="bg-muted size-12 rounded-lg object-contain" />
+                <img
+                  src={kit.logo_url}
+                  alt=""
+                  className="bg-muted size-12 rounded-lg object-contain"
+                />
               ) : (
-                <div className="bg-muted size-12 rounded-lg" style={{ backgroundColor: kit.primary_color ?? undefined }} />
+                <div
+                  className="bg-muted size-12 rounded-lg"
+                  style={{ backgroundColor: kit.primary_color ?? undefined }}
+                />
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{kit.name}</p>
@@ -61,10 +78,15 @@ export function BrandKitsList({ brandKits }: { brandKits: BrandKit[] }) {
                     kit.cta_text && "CTA",
                   ]
                     .filter(Boolean)
-                    .join(" \u00b7 ") || "No assets set"}
+                    .join(" \u00b7 ") ?? "No assets set"}
                 </p>
               </div>
-              <Button size="icon" variant="ghost" onClick={() => void onDelete(kit.id)} aria-label="Delete brand kit">
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => void onDelete(kit.id)}
+                aria-label="Delete brand kit"
+              >
                 <Trash2 className="text-muted-foreground size-4" />
               </Button>
             </div>
@@ -73,15 +95,21 @@ export function BrandKitsList({ brandKits }: { brandKits: BrandKit[] }) {
       )}
 
       <p className="text-muted-foreground text-xs">
-        A brand kit is applied automatically whenever a production plan&apos;s branding.brand_kit_id is set \u2014
-        that still has to be passed through a workflow input rather than picked from this page. All fields set
-        below (logo, watermark, music, colors, font, caption style, CTA text, voice) are applied at render time.
+        A brand kit is applied automatically whenever a production plan&apos;s
+        branding.brand_kit_id is set \u2014 that still has to be passed through
+        a workflow input rather than picked from this page. All fields set below
+        (logo, watermark, music, colors, font, caption style, CTA text, voice)
+        are applied at render time.
       </p>
     </div>
   );
 }
 
-function NewBrandKitDialog({ onCreated }: { onCreated: (kit: BrandKit) => void }) {
+function NewBrandKitDialog({
+  onCreated,
+}: {
+  onCreated: (kit: BrandKit) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [logo, setLogo] = useState<File | null>(null);
@@ -102,8 +130,12 @@ function NewBrandKitDialog({ onCreated }: { onCreated: (kit: BrandKit) => void }
     setSubmitting(true);
     try {
       const logo_s3_key = logo ? await upload(logo, "brandKitLogo") : undefined;
-      const watermark_s3_key = watermark ? await upload(watermark, "brandKitWatermark") : undefined;
-      const default_music_s3_key = music ? await upload(music, "brandKitMusic") : undefined;
+      const watermark_s3_key = watermark
+        ? await upload(watermark, "brandKitWatermark")
+        : undefined;
+      const default_music_s3_key = music
+        ? await upload(music, "brandKitMusic")
+        : undefined;
       const kit = await createBrandKit({
         name,
         logo_s3_key,
@@ -125,7 +157,9 @@ function NewBrandKitDialog({ onCreated }: { onCreated: (kit: BrandKit) => void }
       setFontFamily("");
       setCtaText("");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't create that brand kit.");
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't create that brand kit.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -146,23 +180,67 @@ function NewBrandKitDialog({ onCreated }: { onCreated: (kit: BrandKit) => void }
           <DialogTitle>New brand kit</DialogTitle>
         </DialogHeader>
         <div className="max-h-[70vh] space-y-3 overflow-y-auto pr-1">
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Brand kit name" maxLength={120} />
-          <FileDropInput accept="image/*" label="Logo (optional)" preview="image" onFile={setLogo} />
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Brand kit name"
+            maxLength={120}
+          />
+          <FileDropInput
+            accept="image/*"
+            label="Logo (optional)"
+            preview="image"
+            onFile={setLogo}
+          />
           {/* gap-closure: watermark_s3_key was accepted by the API from
               the start but this form never collected it. Now rendered
               opposite the logo — see render_manifest_builder.py. */}
-          <FileDropInput accept="image/*" label="Watermark (optional, rendered opposite the logo)" preview="image" onFile={setWatermark} />
-          <FileDropInput accept="audio/*" label="Default background music (optional)" preview="audio" onFile={setMusic} />
+          <FileDropInput
+            accept="image/*"
+            label="Watermark (optional, rendered opposite the logo)"
+            preview="image"
+            onFile={setWatermark}
+          />
+          <FileDropInput
+            accept="audio/*"
+            label="Default background music (optional)"
+            preview="audio"
+            onFile={setMusic}
+          />
           <div className="flex gap-2">
-            <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} placeholder="Primary color, e.g. #FFAA00" maxLength={16} />
-            <Input value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} placeholder="Secondary color" maxLength={16} />
+            <Input
+              value={primaryColor}
+              onChange={(e) => setPrimaryColor(e.target.value)}
+              placeholder="Primary color, e.g. #FFAA00"
+              maxLength={16}
+            />
+            <Input
+              value={secondaryColor}
+              onChange={(e) => setSecondaryColor(e.target.value)}
+              placeholder="Secondary color"
+              maxLength={16}
+            />
           </div>
-          <Input value={fontFamily} onChange={(e) => setFontFamily(e.target.value)} placeholder="Caption font (optional), e.g. Arial" maxLength={120} />
-          <Input value={ctaText} onChange={(e) => setCtaText(e.target.value)} placeholder="CTA text shown at the end (optional)" maxLength={200} />
+          <Input
+            value={fontFamily}
+            onChange={(e) => setFontFamily(e.target.value)}
+            placeholder="Caption font (optional), e.g. Arial"
+            maxLength={120}
+          />
+          <Input
+            value={ctaText}
+            onChange={(e) => setCtaText(e.target.value)}
+            placeholder="CTA text shown at the end (optional)"
+            maxLength={200}
+          />
         </div>
         <DialogFooter>
           <Button onClick={() => void onCreate()} disabled={busy}>
-            {uploading ? "Uploading\u2026" : submitting ? "Creating\u2026" : "Create brand kit"}
+            {uploading
+              ? "Uploading\u2026"
+              : submitting
+                ? "Creating\u2026"
+                : "Create brand kit"}
           </Button>
         </DialogFooter>
       </DialogContent>

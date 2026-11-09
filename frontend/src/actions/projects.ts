@@ -66,44 +66,103 @@ export interface Character {
 }
 
 export interface EditorAsset {
-  id: string; type: "audio" | "video" | "image" | string; source?: string; mime_type: string | null;
-  source_generation_id?: string | null; scene_number?: number | null;
-  duration_seconds: number | null; file_name: string; url: string;
+  id: string;
+  type: string;
+  source?: string;
+  mime_type: string | null;
+  source_generation_id?: string | null;
+  scene_number?: number | null;
+  duration_seconds: number | null;
+  file_name: string;
+  url: string;
 }
 
 export interface EditorTimeline {
   version: 1;
-  clips: Array<{ id: string; shotId: string; title: string; prompt: string; duration: number; trimStart: number; trimEnd: number; transition: "none" | "fade" | "dissolve" | "wipe"; volume: number; muted: boolean }>;
-  textLayers: Array<{ id: string; text: string; start: number; duration: number; style: "title" | "caption" | "label" }>;
-  audioLayers: Array<{ id: string; name: string; assetId: string | null; start: number; duration: number; volume: number; kind: "music" | "voice" | "sfx"; loop?: boolean }>;
+  clips: Array<{
+    id: string;
+    shotId: string;
+    title: string;
+    prompt: string;
+    duration: number;
+    trimStart: number;
+    trimEnd: number;
+    transition: "none" | "fade" | "dissolve" | "wipe";
+    volume: number;
+    muted: boolean;
+  }>;
+  textLayers: Array<{
+    id: string;
+    text: string;
+    start: number;
+    duration: number;
+    style: "title" | "caption" | "label";
+  }>;
+  audioLayers: Array<{
+    id: string;
+    name: string;
+    assetId: string | null;
+    start: number;
+    duration: number;
+    volume: number;
+    kind: "music" | "voice" | "sfx";
+    loop?: boolean;
+  }>;
   aspectRatio: string;
   zoom: number;
   selectedId: string | null;
 }
 
-
-
-export async function getProjectAssetUploadUrl(fileName: string, mimeType: string) {
+export async function getProjectAssetUploadUrl(
+  fileName: string,
+  mimeType: string,
+) {
   const uid = await userId();
   return backendFetch<{ url: string; key: string }>(uid, "/uploads/presign", {
     method: "POST",
-    body: JSON.stringify({ file_name: fileName, content_type: mimeType, purpose: uid }),
+    body: JSON.stringify({
+      file_name: fileName,
+      content_type: mimeType,
+      purpose: uid,
+    }),
   });
 }
 
 export async function listProjectAssets(projectId: string) {
   const uid = await userId();
-  return backendFetch<{ assets: EditorAsset[] }>(uid, `/projects/${projectId}/assets`, { method: "GET" });
+  return backendFetch<{ assets: EditorAsset[] }>(
+    uid,
+    `/projects/${projectId}/assets`,
+    { method: "GET" },
+  );
 }
 
-export async function registerProjectAsset(projectId: string, input: { key: string; file_name: string; mime_type: string; duration_seconds?: number | null }) {
+export async function registerProjectAsset(
+  projectId: string,
+  input: {
+    key: string;
+    file_name: string;
+    mime_type: string;
+    duration_seconds?: number | null;
+  },
+) {
   const uid = await userId();
-  return backendFetch<{ asset: EditorAsset }>(uid, `/projects/${projectId}/assets`, { method: "POST", body: JSON.stringify(input) });
+  return backendFetch<{ asset: EditorAsset }>(
+    uid,
+    `/projects/${projectId}/assets`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
-export async function saveEditorTimeline(projectId: string, timeline: EditorTimeline) {
+export async function saveEditorTimeline(
+  projectId: string,
+  timeline: EditorTimeline,
+) {
   const uid = await userId();
-  const result = await backendFetch<{ saved: boolean; editor_timeline: EditorTimeline }>(uid, `/projects/${projectId}/editor-timeline`, {
+  const result = await backendFetch<{
+    saved: boolean;
+    editor_timeline: EditorTimeline;
+  }>(uid, `/projects/${projectId}/editor-timeline`, {
     method: "PUT",
     body: JSON.stringify({ timeline }),
   });
@@ -113,19 +172,29 @@ export async function saveEditorTimeline(projectId: string, timeline: EditorTime
 
 export async function renderEditorTimeline(projectId: string) {
   const uid = await userId();
-  const result = await backendFetch<{ queued: boolean; production_id: string; message: string }>(uid, `/projects/${projectId}/render-editor`, { method: "POST" });
+  const result = await backendFetch<{
+    queued: boolean;
+    production_id: string;
+    message: string;
+  }>(uid, `/projects/${projectId}/render-editor`, { method: "POST" });
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
 
 export async function listProjects() {
   const uid = await userId();
-  return backendFetch<{ projects: Project[] }>(uid, "/projects", { method: "GET" });
+  return backendFetch<{ projects: Project[] }>(uid, "/projects", {
+    method: "GET",
+  });
 }
 
 export async function getProject(id: string) {
   const uid = await userId();
-  return backendFetch<Project & { shots: Shot[]; characters: Character[] }>(uid, `/projects/${id}`, { method: "GET" });
+  return backendFetch<Project & { shots: Shot[]; characters: Character[] }>(
+    uid,
+    `/projects/${id}`,
+    { method: "GET" },
+  );
 }
 
 export async function createProject(input: {
@@ -150,13 +219,22 @@ export async function createProject(input: {
 
 export async function createCharacter(
   projectId: string,
-  input: { name: string; description?: string; reference_s3_keys: string[]; voice_id?: string },
+  input: {
+    name: string;
+    description?: string;
+    reference_s3_keys: string[];
+    voice_id?: string;
+  },
 ) {
   const uid = await userId();
-  const result = await backendFetch<Character>(uid, `/projects/${projectId}/characters`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  const result = await backendFetch<Character>(
+    uid,
+    `/projects/${projectId}/characters`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
@@ -182,32 +260,52 @@ export async function addShot(
 
 export async function submitShot(projectId: string, shotId: string) {
   const uid = await userId();
-  const result = await backendFetch<Shot>(uid, `/projects/${projectId}/shots/${shotId}/submit`, {
-    method: "POST",
-  });
+  const result = await backendFetch<Shot>(
+    uid,
+    `/projects/${projectId}/shots/${shotId}/submit`,
+    {
+      method: "POST",
+    },
+  );
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
 
 // POST /projects/{id}/shots/{shot_id}/regenerate — V2 (B08): a new attempt
 // at this shot, keeping the previous one in history rather than losing it.
-export async function regenerateShot(projectId: string, shotId: string, prompt?: string) {
+export async function regenerateShot(
+  projectId: string,
+  shotId: string,
+  prompt?: string,
+) {
   const uid = await userId();
-  const result = await backendFetch<Shot>(uid, `/projects/${projectId}/shots/${shotId}/regenerate`, {
-    method: "POST",
-    body: JSON.stringify({ prompt: prompt ?? null }),
-  });
+  const result = await backendFetch<Shot>(
+    uid,
+    `/projects/${projectId}/shots/${shotId}/regenerate`,
+    {
+      method: "POST",
+      body: JSON.stringify({ prompt: prompt ?? null }),
+    },
+  );
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
 
 // POST /projects/{id}/shots/{shot_id}/select-version
-export async function selectShotVersion(projectId: string, shotId: string, generationId: string) {
+export async function selectShotVersion(
+  projectId: string,
+  shotId: string,
+  generationId: string,
+) {
   const uid = await userId();
-  const result = await backendFetch<Shot>(uid, `/projects/${projectId}/shots/${shotId}/select-version`, {
-    method: "POST",
-    body: JSON.stringify({ generation_id: generationId }),
-  });
+  const result = await backendFetch<Shot>(
+    uid,
+    `/projects/${projectId}/shots/${shotId}/select-version`,
+    {
+      method: "POST",
+      body: JSON.stringify({ generation_id: generationId }),
+    },
+  );
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
@@ -217,7 +315,11 @@ export async function selectShotVersion(projectId: string, shotId: string, gener
 // backend/app/services/movie/service.py::MovieService.cancel_project.
 export async function cancelProject(projectId: string) {
   const uid = await userId();
-  const result = await backendFetch<Project>(uid, `/projects/${projectId}/cancel`, { method: "POST" });
+  const result = await backendFetch<Project>(
+    uid,
+    `/projects/${projectId}/cancel`,
+    { method: "POST" },
+  );
   revalidatePath(`/projects/${projectId}`);
   return result;
 }
@@ -238,5 +340,9 @@ export interface RenderJob {
 // backend/app/models/render_job.py.
 export async function getLatestRenderJob(projectId: string) {
   const uid = await userId();
-  return backendFetch<{ render_job: RenderJob | null }>(uid, `/projects/${projectId}/render-job`, { method: "GET" });
+  return backendFetch<{ render_job: RenderJob | null }>(
+    uid,
+    `/projects/${projectId}/render-job`,
+    { method: "GET" },
+  );
 }

@@ -437,3 +437,4 @@
 .vivid-duration-slider:hover::-webkit-slider-thumb { transform: scale(1.08); }
 .vivid-duration-slider:focus-visible { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 5px; }
 @media (prefers-reduced-motion: reduce) { .vivid-duration-slider::-webkit-slider-thumb { transition: none; } }
+ .studio-select{height:2.5rem;width:100%;border:1px solid var(--border);border-radius:.75rem;background:var(--background);padding:0 .75rem;color:var(--foreground);font-size:.875rem;outline:none;transition:border-color .16s,box-shadow .16s}.studio-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 15%,transparent)}

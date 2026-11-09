@@ -78,6 +78,9 @@ export async function createPlan(
     project_type?: string;
     duration_seconds?: number;
     aspect_ratio?: string;
+    resolution?: string;
+    quality_mode?: "low" | "medium" | "high" | "fast" | "balanced" | "best";
+    model_id?: string;
     target_platform?: string;
     style?: string;
     audience?: string;

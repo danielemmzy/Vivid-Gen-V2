@@ -49,7 +49,7 @@ class CreditRepository:
             await self.session.execute(
                 text(
                     "SELECT id, type, amount, balance_before, balance_after, description, created_at "
-                    "FROM credit_transaction WHERE user_id = :uid ORDER BY created_at DESC LIMIT :limit"
+                    "FROM core.credit_transaction WHERE user_id = :uid ORDER BY created_at DESC LIMIT :limit"
                 ),
                 {"uid": user_id, "limit": limit},
             )

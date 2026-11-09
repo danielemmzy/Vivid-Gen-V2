@@ -2,7 +2,7 @@
 before app.core.config is imported anywhere in the import chain."""
 import os
 
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://postgres:password@localhost:5432/vividgen_test")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/vividgen")
 os.environ.setdefault("BACKEND_PUBLIC_URL", "http://localhost:8000")
 os.environ.setdefault("INTERNAL_API_SECRET", "x" * 64)
 os.environ.setdefault("FAL_KEY", "test")

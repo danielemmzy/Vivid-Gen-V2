@@ -37,7 +37,9 @@ export function ShortsForm() {
         toast.error("No highlights were found in this video's transcript.");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't process that video.");
+      toast.error(
+        err instanceof Error ? err.message : "Couldn't process that video.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -47,21 +49,41 @@ export function ShortsForm() {
 
   return (
     <div className="space-y-4">
-      <FileDropInput accept="video/*" label="Drop a video, or click to browse" preview="video" onFile={setFile} />
+      <FileDropInput
+        accept="video/*"
+        label="Drop a video, or click to browse"
+        preview="video"
+        onFile={setFile}
+      />
       <div className="flex justify-end border-t pt-4">
         <Button onClick={() => void onSubmit()} disabled={busy}>
-          {uploading ? "Uploading\u2026" : submitting ? "Finding highlights\u2026" : "Find Shorts"}
+          {uploading
+            ? "Uploading\u2026"
+            : submitting
+              ? "Finding highlights\u2026"
+              : "Find Shorts"}
         </Button>
       </div>
 
       {projectId && clips.length > 0 && (
         <div className="space-y-2 rounded-lg border p-4">
-          <p className="text-sm font-medium">{clips.length} clip{clips.length === 1 ? "" : "s"} found</p>
+          <p className="text-sm font-medium">
+            {clips.length} clip{clips.length === 1 ? "" : "s"} found
+          </p>
           {clips.map((clip) => (
-            <div key={clip.id} className="flex items-center justify-between gap-3 rounded-lg border p-2">
+            <div
+              key={clip.id}
+              className="flex items-center justify-between gap-3 rounded-lg border p-2"
+            >
               <div className="min-w-0">
-                <p className="truncate text-sm">{String(clip.metadata.reason ?? "Highlight")}</p>
-                <p className="text-muted-foreground font-data text-xs">{clip.duration_seconds.toFixed(1)}s</p>
+                <p className="truncate text-sm">
+                  {typeof clip.metadata.reason === "string"
+                    ? clip.metadata.reason
+                    : "Highlight"}
+                </p>
+                <p className="text-muted-foreground font-data text-xs">
+                  {clip.duration_seconds.toFixed(1)}s
+                </p>
               </div>
             </div>
           ))}

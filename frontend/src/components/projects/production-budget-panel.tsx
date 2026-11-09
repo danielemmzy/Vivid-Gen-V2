@@ -10,7 +10,11 @@ import type { ProductionBudgetResult } from "~/actions/productions";
  * scattered Generation fields with no production-level rollup and no
  * frontend surface at all. See backend/app/models/production_budget.py.
  */
-export function ProductionBudgetPanel({ productionId }: { productionId: string }) {
+export function ProductionBudgetPanel({
+  productionId,
+}: {
+  productionId: string;
+}) {
   const [budget, setBudget] = useState<ProductionBudgetResult | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -20,7 +24,7 @@ export function ProductionBudgetPanel({ productionId }: { productionId: string }
       .then((result) => {
         if (!cancelled) setBudget(result.budget);
       })
-      .catch(() => {})
+      .catch(() => undefined)
       .finally(() => {
         if (!cancelled) setLoaded(true);
       });
@@ -37,10 +41,16 @@ export function ProductionBudgetPanel({ productionId }: { productionId: string }
         <div>
           <h2 className="text-sm font-medium">Production budget</h2>
           <p className="text-muted-foreground mt-0.5 text-xs">
-            {budget.budget_profile === "long_form" ? "Long-form movie" : "Short-form video"} · up to {budget.max_shots} shots · {budget.max_retries_per_shot} {budget.max_retries_per_shot === 1 ? "retry" : "retries"} per shot
+            {budget.budget_profile === "long_form"
+              ? "Long-form movie"
+              : "Short-form video"}{" "}
+            · up to {budget.max_shots} shots · {budget.max_retries_per_shot}{" "}
+            {budget.max_retries_per_shot === 1 ? "retry" : "retries"} per shot
           </p>
         </div>
-        <span className="bg-muted rounded-full px-2.5 py-1 text-[11px] font-medium capitalize">{budget.status}</span>
+        <span className="bg-muted rounded-full px-2.5 py-1 text-[11px] font-medium capitalize">
+          {budget.status}
+        </span>
       </div>
       <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
         <div>

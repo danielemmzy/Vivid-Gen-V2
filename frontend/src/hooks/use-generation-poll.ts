@@ -11,7 +11,10 @@ import { isInFlight } from "~/components/generation-status-badge";
  * reports completed/failed/refunded — never invents a frontend-only
  * "done" state.
  */
-export function useGenerationPoll(initial: GenerationResult, intervalMs = 4000) {
+export function useGenerationPoll(
+  initial: GenerationResult,
+  intervalMs = 4000,
+) {
   const [generation, setGeneration] = useState(initial);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -23,13 +26,15 @@ export function useGenerationPoll(initial: GenerationResult, intervalMs = 4000) 
     if (!isInFlight(generation.status)) return;
 
     let cancelled = false;
-    timer.current = setTimeout(async () => {
-      try {
-        const next = await getGeneration(generation.id);
-        if (!cancelled) setGeneration(next);
-      } catch {
-        // Transient network/backend errors just get retried on the next tick.
-      }
+    timer.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const next = await getGeneration(generation.id);
+          if (!cancelled) setGeneration(next);
+        } catch {
+          // Transient network/backend errors just get retried on the next tick.
+        }
+      })();
     }, intervalMs);
 
     return () => {

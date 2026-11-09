@@ -26,17 +26,24 @@ export function useProjectPoll(initial: FullProject, intervalMs = 4000) {
   }, [initial.id, initial.status]);
 
   useEffect(() => {
-    const anyShotInFlight = project.shots.some((s) => s.status === "pending" || s.status === "queued" || s.status === "processing");
+    const anyShotInFlight = project.shots.some(
+      (s) =>
+        s.status === "pending" ||
+        s.status === "queued" ||
+        s.status === "processing",
+    );
     if (!isProjectInFlight(project.status) && !anyShotInFlight) return;
 
     let cancelled = false;
-    timer.current = setTimeout(async () => {
-      try {
-        const next = await getProject(project.id);
-        if (!cancelled) setProject(next);
-      } catch {
-        // Transient network/backend errors just get retried on the next tick.
-      }
+    timer.current = setTimeout(() => {
+      void (async () => {
+        try {
+          const next = await getProject(project.id);
+          if (!cancelled) setProject(next);
+        } catch {
+          // Transient network/backend errors just get retried on the next tick.
+        }
+      })();
     }, intervalMs);
 
     return () => {

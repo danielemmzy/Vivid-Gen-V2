@@ -98,3 +98,109 @@ class CharacterNotFoundError(VividGenError):
 class ProjectLimitExceededError(VividGenError):
     http_status = 400
     code = "PROJECT_LIMIT_EXCEEDED"
+
+
+class PlanValidationError(VividGenError):
+    """Raised by orchestration/plan_validator.py. `details["errors"]` is the
+    full list of validation problems, not just the first — the frontend
+    shows all of them at once rather than making the user fix-and-resubmit
+    one at a time."""
+    http_status = 422
+    code = "PLAN_VALIDATION_FAILED"
+
+
+class RenderJobNotFoundError(VividGenError):
+    http_status = 404
+    code = "RENDER_JOB_NOT_FOUND"
+
+
+class ExportNotFoundError(VividGenError):
+    http_status = 404
+    code = "EXPORT_NOT_FOUND"
+
+
+class ProjectNotRenderableError(VividGenError):
+    """Raised by services/export/service.py when an export is requested
+    against a project that has no completed master yet."""
+    http_status = 400
+    code = "PROJECT_NOT_RENDERABLE"
+
+
+class UnsupportedUploadTypeError(VividGenError):
+    http_status = 400
+    code = "UNSUPPORTED_UPLOAD_TYPE"
+
+
+class GenerationNotCancellableError(VividGenError):
+    http_status = 400
+    code = "GENERATION_NOT_CANCELLABLE"
+
+
+class ProjectNotCancellableError(VividGenError):
+    http_status = 400
+    code = "PROJECT_NOT_CANCELLABLE"
+
+
+# --- gap-closure (0007): Production domain ---
+
+class ProductionNotFoundError(VividGenError):
+    http_status = 404
+    code = "PRODUCTION_NOT_FOUND"
+
+
+class ProductionNotCancellableError(VividGenError):
+    http_status = 400
+    code = "PRODUCTION_NOT_CANCELLABLE"
+
+
+class InvalidDagError(VividGenError):
+    """Raised by orchestration/dag.py's validation pass — a cycle, a
+    dangling edge (references a task not in this production), or a
+    duplicate edge. A production is never allowed to start executing
+    with a DAG that fails this check; `details["errors"]` carries every
+    problem found, not just the first."""
+    http_status = 422
+    code = "INVALID_PRODUCTION_DAG"
+
+
+class InsufficientProductionBudgetError(VividGenError):
+    """Raised by services/production/budget_service.py when a
+    production's estimated cost exceeds the user's available balance at
+    reservation time."""
+    http_status = 402
+    code = "INSUFFICIENT_PRODUCTION_BUDGET"
+
+
+class ProductionBudgetNotFoundError(VividGenError):
+    http_status = 404
+    code = "PRODUCTION_BUDGET_NOT_FOUND"
+
+
+# --- Round 4: Asset/Model/Audio routers, Product domain ---
+
+class ProductNotFoundError(VividGenError):
+    http_status = 404
+    code = "PRODUCT_NOT_FOUND"
+
+
+class ProviderNotConfiguredError(VividGenError):
+    """Raised (or, more often, just returned as an explicit
+    ProviderAvailabilityStatus.NOT_CONFIGURED result — routers generally
+    prefer that to raising, so a missing stock/music provider degrades
+    gracefully rather than failing a whole scene) when a provider needs
+    credentials that aren't present. Distinct from a runtime provider
+    failure — see core/constants.py::ProviderAvailabilityStatus."""
+    http_status = 424
+    code = "PROVIDER_NOT_CONFIGURED"
+
+
+class AssetResolutionError(VividGenError):
+    """Raised by orchestration/asset_router.py when no candidate asset
+    could be resolved for a scene's requirement through any source."""
+    http_status = 422
+    code = "ASSET_RESOLUTION_FAILED"
+
+
+class CaptionTrackNotFoundError(VividGenError):
+    http_status = 404
+    code = "CAPTION_TRACK_NOT_FOUND"

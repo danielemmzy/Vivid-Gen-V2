@@ -13,7 +13,7 @@ export default async function GenerationsPage() {
       <div className="mb-6">
         <h1 className="font-display text-3xl font-semibold">Generations</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Everything you've created, across every workflow.
+          Everything you&apos;ve created, across every workflow.
         </p>
       </div>
       <GenerationsLibrary generations={generations} />

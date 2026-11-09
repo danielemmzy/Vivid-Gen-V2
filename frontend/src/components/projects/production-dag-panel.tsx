@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { getProductionDag } from "~/actions/productions";
-import type { ProductionTaskEdge, ProductionTaskResult } from "~/actions/productions";
+import type {
+  ProductionTaskEdge,
+  ProductionTaskResult,
+} from "~/actions/productions";
 import { cn } from "~/lib/utils";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -14,7 +17,14 @@ const STATUS_CLASS: Record<string, string> = {
   skipped: "text-muted-foreground",
 };
 
-const STATUS_ORDER = ["failed", "running", "ready", "blocked", "completed", "skipped"];
+const STATUS_ORDER = [
+  "failed",
+  "running",
+  "ready",
+  "blocked",
+  "completed",
+  "skipped",
+];
 
 function taskLabel(task: ProductionTaskResult): string {
   if (task.type === "scene") return `Scene ${task.scene_number}`;
@@ -36,7 +46,13 @@ function taskLabel(task: ProductionTaskResult): string {
  * the same information (status per task, real dependency edges) without
  * introducing a new charting/graph-layout library for one panel.
  */
-export function ProductionDagPanel({ productionId, active }: { productionId: string; active: boolean }) {
+export function ProductionDagPanel({
+  productionId,
+  active,
+}: {
+  productionId: string;
+  active: boolean;
+}) {
   const [tasks, setTasks] = useState<ProductionTaskResult[]>([]);
   const [edges, setEdges] = useState<ProductionTaskEdge[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -58,7 +74,9 @@ export function ProductionDagPanel({ productionId, active }: { productionId: str
         if (!cancelled) setLoaded(true);
       }
       if (!cancelled && active) {
-        timer = setTimeout(poll, 4000);
+        timer = setTimeout(() => {
+          void poll();
+        }, 4000);
       }
     }
     void poll();
@@ -91,19 +109,40 @@ export function ProductionDagPanel({ productionId, active }: { productionId: str
       <h2 className="text-sm font-medium">Production DAG</h2>
       <div className="space-y-1.5">
         {sorted.map((task) => {
-          const upstream = (upstreamOf.get(task.id) ?? []).map((id) => taskById.get(id)).filter((t): t is ProductionTaskResult => Boolean(t));
+          const upstream = (upstreamOf.get(task.id) ?? [])
+            .map((id) => taskById.get(id))
+            .filter((t): t is ProductionTaskResult => Boolean(t));
           return (
-            <div key={task.id} className="flex items-baseline justify-between gap-3 rounded-lg border px-3 py-1.5 text-xs">
+            <div
+              key={task.id}
+              className="flex items-baseline justify-between gap-3 rounded-lg border px-3 py-1.5 text-xs"
+            >
               <div className="min-w-0">
-                <span className={cn("font-medium", STATUS_CLASS[task.status] ?? "text-muted-foreground")}>{taskLabel(task)}</span>
+                <span
+                  className={cn(
+                    "font-medium",
+                    STATUS_CLASS[task.status] ?? "text-muted-foreground",
+                  )}
+                >
+                  {taskLabel(task)}
+                </span>
                 {upstream.length > 0 && (
                   <span className="text-muted-foreground ml-2">
                     after {upstream.map(taskLabel).join(", ")}
                   </span>
                 )}
-                {task.error && <span className="text-destructive ml-2">{task.error}</span>}
+                {task.error && (
+                  <span className="text-destructive ml-2">{task.error}</span>
+                )}
               </div>
-              <span className={cn("shrink-0 capitalize", STATUS_CLASS[task.status] ?? "text-muted-foreground")}>{task.status}</span>
+              <span
+                className={cn(
+                  "shrink-0 capitalize",
+                  STATUS_CLASS[task.status] ?? "text-muted-foreground",
+                )}
+              >
+                {task.status}
+              </span>
             </div>
           );
         })}

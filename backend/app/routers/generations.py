@@ -31,7 +31,7 @@ async def text_to_image(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     return await GenerationService(session).create(
-        user_id=user_id, generation_type=GenerationType.TEXT_TO_IMAGE, model_id=body.model, prompt=body.prompt,
+        user_id=user_id, generation_type=GenerationType.TEXT_TO_IMAGE, model_id=body.model, quality_mode=body.quality_mode, prompt=body.prompt,
         aspect_ratio=body.aspect_ratio, num_images=body.num_images, idempotency_key=idempotency_key,
     )
 
@@ -42,7 +42,7 @@ async def image_to_image(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     return await GenerationService(session).create(
-        user_id=user_id, generation_type=GenerationType.IMAGE_TO_IMAGE, model_id=body.model, prompt=body.prompt,
+        user_id=user_id, generation_type=GenerationType.IMAGE_TO_IMAGE, model_id=body.model, quality_mode=body.quality_mode, prompt=body.prompt,
         input_s3_key=body.input_s3_key, idempotency_key=idempotency_key,
     )
 
@@ -53,7 +53,7 @@ async def text_to_video(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     return await GenerationService(session).create(
-        user_id=user_id, generation_type=GenerationType.TEXT_TO_VIDEO, model_id=body.model, prompt=body.prompt,
+        user_id=user_id, generation_type=GenerationType.TEXT_TO_VIDEO, model_id=body.model, quality_mode=body.quality_mode, prompt=body.prompt,
         duration_seconds=body.duration_seconds, resolution=body.resolution, aspect_ratio=body.aspect_ratio,
         idempotency_key=idempotency_key,
     )
@@ -65,9 +65,9 @@ async def image_to_video(
     idempotency_key: str | None = Header(default=None, alias="Idempotency-Key"),
 ):
     return await GenerationService(session).create(
-        user_id=user_id, generation_type=GenerationType.IMAGE_TO_VIDEO, model_id=body.model, prompt=body.prompt,
+        user_id=user_id, generation_type=GenerationType.IMAGE_TO_VIDEO, model_id=body.model, quality_mode=body.quality_mode, prompt=body.prompt,
         input_s3_key=body.input_s3_key, duration_seconds=body.duration_seconds, resolution=body.resolution,
-        idempotency_key=idempotency_key,
+        aspect_ratio=body.aspect_ratio, idempotency_key=idempotency_key,
     )
 
 
@@ -82,8 +82,9 @@ async def avatar(
     safety_margin — and the finalize job charges the actual amount."""
     return await GenerationService(session).create(
         user_id=user_id, generation_type=GenerationType.AVATAR, model_id=body.model,
-        input_s3_key=body.image_s3_key, secondary_input_s3_key=body.audio_s3_key, resolution=body.resolution,
-        reservation_safety_margin=1.5, idempotency_key=idempotency_key,
+        input_s3_key=body.image_s3_key, secondary_input_s3_key=body.audio_s3_key,
+        duration_seconds=body.duration_seconds, reservation_safety_margin=1.5,
+        idempotency_key=idempotency_key,
     )
 
 
@@ -95,7 +96,8 @@ async def video_translation(
     model = body.model or ("video-translate-dub" if body.lip_sync else "video-dub-audio-only")
     return await GenerationService(session).create(
         user_id=user_id, generation_type=GenerationType.VIDEO_TRANSLATION, model_id=model,
-        input_s3_key=body.video_s3_key, target_language=body.target_language, idempotency_key=idempotency_key,
+        input_s3_key=body.video_s3_key, target_language=body.target_language,
+        duration_seconds=body.source_duration_seconds, idempotency_key=idempotency_key,
     )
 
 
@@ -106,7 +108,8 @@ async def audio_replace(
 ):
     return await GenerationService(session).create(
         user_id=user_id, generation_type=GenerationType.AUDIO_REPLACE, model_id=body.model,
-        input_s3_key=body.video_s3_key, secondary_input_s3_key=body.audio_s3_key, idempotency_key=idempotency_key,
+        input_s3_key=body.video_s3_key, secondary_input_s3_key=body.audio_s3_key,
+        duration_seconds=body.source_duration_seconds, idempotency_key=idempotency_key,
     )
 
 
@@ -128,3 +131,10 @@ async def list_generations(
 ):
     items = await GenerationService(session).list_for_user(user_id, limit=min(limit, 100), offset=offset)
     return GenerationListResponse(generations=items, limit=limit, offset=offset)
+
+
+@router.post("/{generation_id}/cancel", response_model=GenerationResponse)
+async def cancel_generation(generation_id: str, user_id: str = Depends(current_user_id), session: AsyncSession = Depends(db_session)):
+    """gap-closure: previously there was no way to cancel a generation
+    anywhere in the API. See GenerationService.cancel."""
+    return await GenerationService(session).cancel(generation_id, user_id)

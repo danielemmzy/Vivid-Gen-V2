@@ -27,6 +27,13 @@ class ProjectRepository:
         stmt = select(Shot).where(Shot.project_id == project_id).order_by(Shot.order_index)
         return list((await self.session.execute(stmt)).scalars().all())
 
+    async def list_characters(self, project_id: str) -> list[Character]:
+        """Was genuinely missing — the frontend kept characters in
+        React-only state as a workaround, losing them on refresh even
+        though they existed in the DB the whole time. Fixed this pass."""
+        stmt = select(Character).where(Character.project_id == project_id)
+        return list((await self.session.execute(stmt)).scalars().all())
+
     async def get_shot_owned(self, shot_id: str, project_id: str) -> Shot | None:
         stmt = select(Shot).where(Shot.id == shot_id, Shot.project_id == project_id)
         return (await self.session.execute(stmt)).scalar_one_or_none()

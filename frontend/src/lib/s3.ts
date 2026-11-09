@@ -9,8 +9,13 @@ export async function getPresignedUrl(key: string) {
   const { redirect } = await import("next/navigation");
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/auth/sign-in");
-  return backendFetch<{ url: string }>(session.user.id, "/media/presign-download", {
-    method: "POST",
-    body: JSON.stringify({ key }),
-  });
+  if (!session) throw new Error("Authentication required");
+  return backendFetch<{ url: string }>(
+    session.user.id,
+    "/media/presign-download",
+    {
+      method: "POST",
+      body: JSON.stringify({ key }),
+    },
+  );
 }

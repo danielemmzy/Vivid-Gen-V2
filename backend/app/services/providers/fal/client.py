@@ -58,13 +58,19 @@ class FalProvider:
         return await self._submit(provider_model_id, {"prompt": prompt, **kwargs})
 
     async def submit_image_to_image(self, provider_model_id: str, prompt: str, image_url: str, **kwargs: Any) -> ProviderSubmission:
-        return await self._submit(provider_model_id, {"prompt": prompt, "image_url": image_url, **kwargs})
+        payload = {"prompt": prompt, **kwargs}
+        if "image_urls" not in payload:
+            payload["image_url"] = image_url
+        return await self._submit(provider_model_id, payload)
 
     async def submit_text_to_video(self, provider_model_id: str, prompt: str, **kwargs: Any) -> ProviderSubmission:
         return await self._submit(provider_model_id, {"prompt": prompt, **kwargs})
 
     async def submit_image_to_video(self, provider_model_id: str, prompt: str, image_url: str, **kwargs: Any) -> ProviderSubmission:
-        return await self._submit(provider_model_id, {"prompt": prompt, "image_url": image_url, **kwargs})
+        payload = {"prompt": prompt, **kwargs}
+        if "image_urls" not in payload:
+            payload["image_url"] = image_url
+        return await self._submit(provider_model_id, payload)
 
     async def submit_avatar(self, provider_model_id: str, image_url: str, audio_url: str, **kwargs: Any) -> ProviderSubmission:
         return await self._submit(provider_model_id, {"image_url": image_url, "audio_url": audio_url, **kwargs})

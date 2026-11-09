@@ -13,6 +13,8 @@ import boto3
 from botocore.config import Config
 from botocore.signers import CloudFrontSigner
 
+from app.core.exceptions import VividGenError
+
 from app.core.config import settings
 
 _client = boto3.client(
@@ -76,9 +78,49 @@ def upload_bytes(key: str, data: bytes, content_type: str) -> None:
     _client.put_object(Bucket=settings.aws_s3_bucket_name, Key=key, Body=data, ContentType=content_type)
 
 
+class DownloadTooLargeError(VividGenError):
+    """Raised by download_to_path when the object exceeds
+    settings.max_upload_bytes — see that function's docstring for why
+    this check lives here rather than at upload time."""
+    http_status = 413
+    code = "FILE_TOO_LARGE"
+
+
 def download_to_path(key: str, local_path: str) -> None:
+    """`max_upload_bytes` was declared in settings but never actually
+    enforced anywhere (a real gap — presigned PUT URLs have no built-in
+    server-side size limit unless you switch to presigned POST with
+    policy conditions, which is a bigger change than this pass makes).
+    This is the pragmatic fix: check the object's real size via S3's own
+    metadata before pulling it, so an oversized file gets rejected here —
+    the one place every workflow that processes an uploaded/referenced
+    file already goes through — rather than silently processing
+    something arbitrarily large."""
+    head = _client.head_object(Bucket=settings.aws_s3_bucket_name, Key=key)
+    size = head.get("ContentLength", 0)
+    if size > settings.max_upload_bytes:
+        raise DownloadTooLargeError(
+            f"This file is too large to process ({size} bytes, limit is {settings.max_upload_bytes})",
+            details={"key": key, "size": size, "limit": settings.max_upload_bytes},
+        )
     _client.download_file(settings.aws_s3_bucket_name, key, local_path)
 
 
 def upload_from_path(local_path: str, key: str, content_type: str) -> None:
     _client.upload_file(local_path, settings.aws_s3_bucket_name, key, ExtraArgs={"ContentType": content_type})
+
+
+def delete_object(key: str) -> None:
+    """Delete only V2-owned input/output objects.
+
+    The caller still needs the narrow ``s3:DeleteObject`` permission. An
+    AccessDenied response is intentionally propagated so cleanup cannot report
+    success while leaving an orphan behind.
+    """
+    allowed_prefixes = (
+        f"{settings.s3_input_prefix}/",
+        f"{settings.s3_output_prefix}/",
+    )
+    if not key.startswith(allowed_prefixes):
+        raise VividGenError("Object key is outside the V2 storage prefixes", details={"key": key})
+    _client.delete_object(Bucket=settings.aws_s3_bucket_name, Key=key)

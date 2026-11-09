@@ -38,7 +38,7 @@ from app.core.config import settings
 from app.core.constants import GenerationStatus
 from app.core.database import system_session
 from app.core.logging import get_logger
-from app.jobs.queue import enqueue_generation_finalize
+from app.jobs.queue import enqueue_generation_finalize, enqueue_generation_submission
 from app.repository.generations import GenerationRepository
 from app.services.credits.service import CreditService
 
@@ -61,9 +61,17 @@ async def sweep_stuck_generations() -> dict[str, int]:
                 continue
 
             if not row.provider_request_id:
-                # Never even got a provider_request_id — the submission call
-                # itself must have died mid-flight before the try/except in
-                # GenerationService could refund. Repair directly.
+                # A QUEUED generation may have survived an API crash between
+                # the DB commit and Redis enqueue. Re-enqueue it instead of
+                # refunding: ARQ is the durable hand-off, and this sweep is
+                # the second line of defense.
+                if row.status == GenerationStatus.QUEUED:
+                    await enqueue_generation_submission(row.id)
+                    recovered += 1
+                    logger.info("reconciliation_reenqueued_submission", generation_id=row.id)
+                    continue
+                # RESERVING_CREDITS without a provider id is a genuinely
+                # abandoned reservation.
                 await _refund_and_fail(session, row.id, row.user_id, row.credits_reserved, "STUCK_NO_PROVIDER_ID")
                 repaired += 1
                 continue

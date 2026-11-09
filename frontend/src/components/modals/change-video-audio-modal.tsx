@@ -17,18 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
 import VideoDropzone from "../video-dropzone";
 import {
   changeVideoAudio,
   getPresignedUrl,
-  translateVideo,
 } from "~/actions/generation";
 import { useAudioPlayer } from "~/hooks/use-audio-player";
 import AudioUploadModal from "../audio-upload-modal";

@@ -70,6 +70,39 @@ class CreditService:
         )
         return after
 
+
+    async def grant_purchase_once(self, user_id: str, amount: int, description: str, external_reference: str) -> tuple[int, bool]:
+        """Grant a paid credit pack exactly once for a verified Polar order ID.
+
+        Returns (balance, newly_granted). Caller commits the transaction.
+        The unique external_reference constraint is the final concurrency guard;
+        the pre-check handles ordinary webhook retries without a uniqueness error.
+        """
+        from sqlalchemy import select
+        if amount <= 0 or not external_reference or len(external_reference) > 191:
+            raise ValueError("Invalid purchase grant")
+        existing = (await self.session.execute(
+            select(CreditTransaction).where(CreditTransaction.external_reference == external_reference)
+        )).scalar_one_or_none()
+        if existing:
+            return await self.repo.get_balance(user_id), False
+        before = await self.repo.get_balance_for_update(user_id)
+        # Re-check after taking the user balance lock to serialize retries for this user.
+        existing = (await self.session.execute(
+            select(CreditTransaction).where(CreditTransaction.external_reference == external_reference)
+        )).scalar_one_or_none()
+        if existing:
+            return before, False
+        after = before + amount
+        await self.repo.set_balance(user_id, after)
+        self.repo.record_transaction(CreditTransaction(
+            id=uuid4().hex, user_id=user_id, generation_id=None,
+            type=CreditTransactionType.PURCHASE, amount=amount,
+            balance_before=before, balance_after=after, description=description[:500],
+            external_reference=external_reference,
+        ))
+        return after, True
+
     async def admin_adjust(self, user_id: str, amount: int, description: str) -> int:
         """Positive or negative, always tagged ADMIN_ADJUSTMENT so it's
         distinguishable in the ledger from ordinary generation

@@ -12,7 +12,9 @@ export const env = createEnv({
     BACKEND_API_URL: z.string().url(),
     BACKEND_INTERNAL_SECRET: z.string().min(32),
     POLAR_ACCESS_TOKEN: z.string(),
+    POLAR_SERVER: z.enum(["sandbox", "production"]).default("sandbox"),
     POLAR_WEBHOOK_SECRET: z.string(),
+    BETTER_AUTH_SECRET: z.string().min(32),
   },
 
   /**
@@ -37,10 +39,12 @@ export const env = createEnv({
     BACKEND_API_URL: process.env.BACKEND_API_URL,
     BACKEND_INTERNAL_SECRET: process.env.BACKEND_INTERNAL_SECRET,
     POLAR_ACCESS_TOKEN: process.env.POLAR_ACCESS_TOKEN,
+    POLAR_SERVER: process.env.POLAR_SERVER,
     NEXT_PUBLIC_SMALL_CREDIT_ID: process.env.NEXT_PUBLIC_SMALL_CREDIT_ID,
     NEXT_PUBLIC_MEDIUM_CREDIT_ID: process.env.NEXT_PUBLIC_MEDIUM_CREDIT_ID,
     NEXT_PUBLIC_LARGE_CREDIT_ID: process.env.NEXT_PUBLIC_LARGE_CREDIT_ID,
     POLAR_WEBHOOK_SECRET: process.env.POLAR_WEBHOOK_SECRET,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

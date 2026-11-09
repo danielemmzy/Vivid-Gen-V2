@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "~/lib/auth";
 import { backendFetch } from "~/lib/backend";
-import type { DirectorProject, ProductionPlan } from "~/actions/director";
+import type { ProductionPlan } from "~/actions/director";
 import type { GenerationResult } from "~/actions/generation";
 
 async function userId() {

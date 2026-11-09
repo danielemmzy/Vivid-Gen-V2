@@ -1,4 +1,4 @@
-import { UploadCloud, Video } from "lucide-react";
+import { Video } from "lucide-react";
 import { useRef, type ChangeEvent } from "react";
 
 export default function VideoDropzone({

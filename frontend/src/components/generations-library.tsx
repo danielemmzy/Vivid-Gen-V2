@@ -16,12 +16,12 @@ import {
 } from "~/components/ui/select";
 import { isVideoType, TYPE_LABELS } from "~/lib/generation-types";
 
-const STATUS_FILTERS = ["all", "processing", "completed", "failed"] as const;
+type StatusFilter = "all" | "processing" | "completed" | "failed";
 
 export function GenerationsLibrary({ generations }: { generations: GenerationResult[] }) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   const types = useMemo(() => Array.from(new Set(generations.map((g) => g.type))), [generations]);
 

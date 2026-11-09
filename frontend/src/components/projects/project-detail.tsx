@@ -39,7 +39,7 @@ import { cn } from "~/lib/utils";
 // MovieService.cancel_project).
 const CANCELLABLE_PROJECT_STATUSES = new Set(["draft", "planning", "awaiting_approval", "generating", "assembling"]);
 
-export function ProjectDetail({ project: initialProject, models, brandKits = [] }: { project: Project & { shots: Shot[]; characters: Character[] }; models: CatalogModel[]; brandKits?: BrandKit[] }) {
+export function ProjectDetail({ project: initialProject, models }: { project: Project & { shots: Shot[]; characters: Character[] }; models: CatalogModel[]; brandKits?: BrandKit[] }) {
   const router = useRouter();
   // gap-closure: previously this page fetched once server-side with no
   // polling at all, despite ProductionProgress claiming "This updates

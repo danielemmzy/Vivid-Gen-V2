@@ -25,12 +25,23 @@ export function ImageToVideoForm() {
   const { upload, uploading } = useDirectUpload();
 
   async function onSubmit() {
-    if (!file) { toast.error("Upload a source image first."); return; }
-    if (!prompt.trim()) { toast.error("Describe the story or motion you want to create from this image."); return; }
+    if (!file) {
+      toast.error("Upload a source image first.");
+      return;
+    }
+    if (!prompt.trim()) {
+      toast.error(
+        "Describe the story or motion you want to create from this image.",
+      );
+      return;
+    }
     setSubmitting(true);
     try {
       const imageKey = await upload(file, "imageToVideoSource");
-      const cleanName = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+      const cleanName = file.name
+        .replace(/\.[^.]+$/, "")
+        .replace(/[_-]+/g, " ")
+        .trim();
       const project = await createProject({
         title: prompt.trim().slice(0, 80) || cleanName || "Image-led movie",
         description: `Image-led production · ${file.name}`,
@@ -55,11 +66,17 @@ export function ImageToVideoForm() {
         style: "cinematic",
         source_facts: `Uploaded visual reference: ${file.name}. Reference asset key: ${imageKey}. Use the saved character reference for visual continuity; do not invent factual claims about the image beyond visible details.`,
       });
-      toast.success("Storyboard created. Review and edit it before generating.");
+      toast.success(
+        "Storyboard created. Review and edit it before generating.",
+      );
       router.push(`/projects/${project.id}`);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not create the image-led storyboard.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not create the image-led storyboard.",
+      );
       setSubmitting(false);
     }
   }
@@ -67,20 +84,123 @@ export function ImageToVideoForm() {
   const busy = submitting || uploading;
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm sm:p-6">
-        <div className="mb-4 flex items-start gap-3"><span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">✦</span><div><h2 className="font-display text-lg font-semibold">Start with a visual reference</h2><p className="mt-1 text-sm leading-relaxed text-muted-foreground">Your image becomes a saved reference for the storyboard. You can edit scenes, narration, captions, sound and branding before you approve production.</p></div></div>
-        <FileDropInput accept="image/png,image/jpeg,image/webp" label="Drop a JPG, PNG or WebP image, or click to browse" preview="image" onFile={setFile} />
-        <Textarea value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Describe the story and movement: a slow cinematic push-in, then reveal the city skyline as the character turns toward the sunrise…" rows={4} maxLength={5000} className="mt-4 rounded-xl bg-background text-sm leading-relaxed" />
-        <p className="mt-2 text-right text-[11px] text-muted-foreground">{prompt.length.toLocaleString()} / 5,000</p>
+      <section className="border-border/80 bg-card rounded-2xl border p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex items-start gap-3">
+          <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+            ✦
+          </span>
+          <div>
+            <h2 className="font-display text-lg font-semibold">
+              Start with a visual reference
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
+              Your image becomes a saved reference for the storyboard. You can
+              edit scenes, narration, captions, sound and branding before you
+              approve production.
+            </p>
+          </div>
+        </div>
+        <FileDropInput
+          accept="image/png,image/jpeg,image/webp"
+          label="Drop a JPG, PNG or WebP image, or click to browse"
+          preview="image"
+          onFile={setFile}
+        />
+        <Textarea
+          value={prompt}
+          onChange={(event) => setPrompt(event.target.value)}
+          placeholder="Describe the story and movement: a slow cinematic push-in, then reveal the city skyline as the character turns toward the sunrise…"
+          rows={4}
+          maxLength={5000}
+          className="bg-background mt-4 rounded-xl text-sm leading-relaxed"
+        />
+        <p className="text-muted-foreground mt-2 text-right text-[11px]">
+          {prompt.length.toLocaleString()} / 5,000
+        </p>
       </section>
 
-      <section className="grid gap-4 rounded-2xl border border-border/80 bg-card p-4 sm:grid-cols-3 sm:p-5">
-        <label className="space-y-2 text-xs font-semibold"><span className="uppercase tracking-[0.12em] text-muted-foreground">Finished movie</span><select value={duration} onChange={(event) => setDuration(Number(event.target.value))} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-medium">{DURATIONS.map((value) => <option key={value} value={value}>{value} seconds</option>)}</select><span className="block font-normal leading-relaxed text-muted-foreground">The planner creates multiple editable scenes to reach the target timeline.</span></label>
-        <label className="space-y-2 text-xs font-semibold"><span className="uppercase tracking-[0.12em] text-muted-foreground">Aspect ratio</span><select value={aspectRatio} onChange={(event) => setAspectRatio(event.target.value)} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-medium">{ASPECTS.map((value) => <option key={value} value={value}>{value}{value === "9:16" ? " · vertical" : value === "16:9" ? " · landscape" : ""}</option>)}</select><span className="block font-normal leading-relaxed text-muted-foreground">Choose framing for the intended destination.</span></label>
-        <label className="space-y-2 text-xs font-semibold"><span className="uppercase tracking-[0.12em] text-muted-foreground">Output resolution</span><select value={resolution} onChange={(event) => setResolution(event.target.value)} className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm font-medium"><option value="420p">420p · Economy output</option><option value="720p">720p · HD</option></select><span className="block font-normal leading-relaxed text-muted-foreground">Final availability depends on the selected provider and render configuration.</span></label>
+      <section className="border-border/80 bg-card grid gap-4 rounded-2xl border p-4 sm:grid-cols-3 sm:p-5">
+        <label className="space-y-2 text-xs font-semibold">
+          <span className="text-muted-foreground tracking-[0.12em] uppercase">
+            Finished movie
+          </span>
+          <select
+            value={duration}
+            onChange={(event) => setDuration(Number(event.target.value))}
+            className="border-border bg-background h-11 w-full rounded-xl border px-3 text-sm font-medium"
+          >
+            {DURATIONS.map((value) => (
+              <option key={value} value={value}>
+                {value} seconds
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-foreground block leading-relaxed font-normal">
+            The planner creates multiple editable scenes to reach the target
+            timeline.
+          </span>
+        </label>
+        <label className="space-y-2 text-xs font-semibold">
+          <span className="text-muted-foreground tracking-[0.12em] uppercase">
+            Aspect ratio
+          </span>
+          <select
+            value={aspectRatio}
+            onChange={(event) => setAspectRatio(event.target.value)}
+            className="border-border bg-background h-11 w-full rounded-xl border px-3 text-sm font-medium"
+          >
+            {ASPECTS.map((value) => (
+              <option key={value} value={value}>
+                {value}
+                {value === "9:16"
+                  ? " · vertical"
+                  : value === "16:9"
+                    ? " · landscape"
+                    : ""}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-foreground block leading-relaxed font-normal">
+            Choose framing for the intended destination.
+          </span>
+        </label>
+        <label className="space-y-2 text-xs font-semibold">
+          <span className="text-muted-foreground tracking-[0.12em] uppercase">
+            Output resolution
+          </span>
+          <select
+            value={resolution}
+            onChange={(event) => setResolution(event.target.value)}
+            className="border-border bg-background h-11 w-full rounded-xl border px-3 text-sm font-medium"
+          >
+            <option value="420p">420p · Economy output</option>
+            <option value="720p">720p · HD</option>
+          </select>
+          <span className="text-muted-foreground block leading-relaxed font-normal">
+            Final availability depends on the selected provider and render
+            configuration.
+          </span>
+        </label>
       </section>
 
-      <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-lg text-xs leading-relaxed text-muted-foreground">No video generation starts here. First you review the shared storyboard and estimate, then approve shots and start production from the project workspace.</p><Button onClick={() => void onSubmit()} disabled={busy || !file || !prompt.trim()} className="h-11 rounded-xl bg-primary px-5 font-semibold text-primary-foreground shadow-[0_8px_20px_-12px_rgba(215,46,60,0.8)] hover:bg-primary/90">{uploading ? "Uploading reference…" : submitting ? "Building storyboard…" : "Create editable storyboard"}</Button></div>
+      <div className="border-border flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground max-w-lg text-xs leading-relaxed">
+          No video generation starts here. First you review the shared
+          storyboard and estimate, then approve shots and start production from
+          the project workspace.
+        </p>
+        <Button
+          onClick={() => void onSubmit()}
+          disabled={busy}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-xl px-5 font-semibold shadow-[0_8px_20px_-12px_rgba(215,46,60,0.8)]"
+        >
+          {uploading
+            ? "Uploading reference…"
+            : submitting
+              ? "Building storyboard…"
+              : "Create editable storyboard"}
+        </Button>
+      </div>
     </div>
   );
 }
